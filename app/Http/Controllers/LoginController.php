@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\Helpers;
 use App\Models\User;
-use Illuminate\Support\Facades\Validator;
 
 class LoginController extends Controller
 {
@@ -18,6 +17,7 @@ class LoginController extends Controller
         $this->Helpers = $Helpers;
         $this->User = $User;
     }
+
     /**
      * View pagina login.
      */
@@ -57,19 +57,24 @@ class LoginController extends Controller
     {
         $password = $request->input('password');
         $token = $request->input('token');
-        $response = $this->Helpers->RequestApi('put', '/api/user/password', [
-            'password' => $password,
-            'token' => $token,
-        ]);
-        if ($response->successful()) {
-            $feedback = json_decode($response->body());
-            return redirect()->route('login')->with('success', $feedback->message);
-        } else {
-            $feedback = end(json_decode($response->body())->errors);
-            return redirect()->back()->with('errors', end($feedback));
-        }
-  
+
+        try {
+            $response = $this->Helpers->RequestApi('put', '/api/user/password', [
+                'password' => $password,
+                'token' => $token,
+            ]);
+            if ($response->successful()) {
+                $feedback = json_decode($response->body());
+                return redirect()->route('login')->with('success', $feedback->message);
+            } else {
+                $feedback = end(json_decode($response->body())->errors);
+                return redirect()->back()->with('errors', end($feedback));
+            }
+            } catch (\Throwable $th) {
+                return redirect()->back()->with('errors', $th->getMessage());
+            }
     }
+
     /**
      * Request para criar um usuario.
      */
@@ -81,18 +86,22 @@ class LoginController extends Controller
         $email = $request->input('email');
         $password = $request->input('password');
 
-        $response = $this->Helpers->RequestApi('post', '/api/user/register', [
-            'name' => $name,
-            'email' => $email,
-            'password' => $password
-        ]);
-
-        if ($response->successful()) {
-            $feedback = json_decode($response->body());
-            return redirect()->route('login')->with('success', $feedback->message);
-        } else {
-            $feedback = end(json_decode($response->body())->errors);
-            return redirect()->back()->with('errors', end($feedback));
+        try {
+            $response = $this->Helpers->RequestApi('post', '/api/user/register', [
+                'name' => $name,
+                'email' => $email,
+                'password' => $password
+            ]);
+    
+            if ($response->successful()) {
+                $feedback = json_decode($response->body());
+                return redirect()->route('login')->with('success', $feedback->message);
+            } else {
+                $feedback = end(json_decode($response->body())->errors);
+                return redirect()->back()->with('errors', end($feedback));
+            }
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('errors', $th->getMessage());
         }
     }
 
@@ -108,22 +117,26 @@ class LoginController extends Controller
             return redirect()->back()->with('errors', 'Informe o e-mail.');
         }elseif(is_null($password)){
             return redirect()->back()->with('errors', 'Informe a senha.');
-        }
-
-        $response = $this->Helpers->RequestApi('post', '/api/user/exists', [
-            'email' => $email
-        ]);
-
-        $credentials = $request->only('email', 'password');
-
-        if ($response->successful()) {
-            if (Auth::attempt($credentials)) {
-                return redirect()->route('admin.index');
-            } else {
-                return redirect()->back()->with('errors', 'Credenciais inválidas. Verifique seu email e senha.');
+        }else{
+            try {
+                $response = $this->Helpers->RequestApi('post', '/api/user/exists', [
+                    'email' => $email
+                ]);
+        
+                $credentials = $request->only('email', 'password');
+        
+                if ($response->successful()) {
+                    if (Auth::attempt($credentials)) {
+                        return redirect()->route('admin.index');
+                    } else {
+                        return redirect()->back()->with('errors', 'Credenciais inválidas. Verifique seu email e senha.');
+                    }
+                } else {
+                    return redirect()->back()->with('errors', 'E-mail ou senha incorreto');
+                }
+            } catch (\Throwable $th) {
+                return redirect()->back()->with('errors', $th->getMessage());
             }
-        } else {
-            return redirect()->back()->with('errors', 'E-mail ou senha incorreto');
         }
     }
 
@@ -135,13 +148,16 @@ class LoginController extends Controller
         $email = $request->input('email');
         if(is_null($email)){
             return redirect()->back()->with('errors', 'Informe o e-mail.');
+        }else{
+            try {
+                $response = $this->Helpers->RequestApi('post', '/api/user/lembrar-senha', [
+                    'email' => $email
+                ]);
+                return redirect()->route('login')->with('success', 'Se seu e-mail estiver cadastrado, enviaremos um lembre de senha.');
+            } catch (\Throwable $th) {
+                return redirect()->back()->with('errors', $th->getMessage());
+            }
         }
-
-        $response = $this->Helpers->RequestApi('post', '/api/user/lembrar-senha', [
-            'email' => $email
-        ]);
-
-        return redirect()->route('login')->with('success', 'Se seu e-mail estiver cadastrado, enviaremos um lembre de senha.');
     }
 
     /**

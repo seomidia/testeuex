@@ -27,7 +27,6 @@ class UserController extends Controller
     public function register(Request $request)
     {
         $validation = $this->User->validateUser($request);
-
         if ($validation->fails())
             return $this->User->respondWithValidationErrors($validation);
 
@@ -69,6 +68,9 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Busca usuario por e-mail.
+     */
     public function UserExists(Request $request)
     {
         $email = $request->input('email');
@@ -84,47 +86,47 @@ class UserController extends Controller
     public function forget(Request $request)
     {
         $email = $request->input('email');
-        $user = User::where('email',$email);
+        $user = User::where('email', $email);
         $UserSend = $user->first();
         if ($UserSend) {
             $token = Str::random(60);
             $UserSend->notify(new ResetPasswordNotification($token));
-            $user->update(['remember_token'=>$token]);
+            $user->update(['remember_token' => $token]);
             return $this->User->respondWithSuccess('Lembrete enviado', $user);
         }
     }
 
     /**
      * Atualiza password
-    */
+     */
     public function setPassword(Request $request)
     {
         $token = $request->input('token');
         $password = Hash::make($request->input('password'));
-        User::where('remember_token', $token)->update(['password'=>$password]);
+        User::where('remember_token', $token)->update(['password' => $password]);
         return $this->User->respondWithSuccess('Senha atualizada', []);
-
     }
+
     /**
      * Atualizar um usuário.
      */
     private function updateUser(Request $request, $id)
     {
-        extract($request->all());
+        $name     =  $request->input('name');
+        $email    =  $request->input('email');
+        $password =  $request->input('password');
         $args = [];
 
-        if (isset($name))
+        if (isset($name)){
             $args['name'] = $name;
-
-        if (isset($email))
+        }elseif (isset($email)){
             $args['email'] = $email;
-
-        if (isset($password))
+        }elseif (isset($password)){
             $args['password'] = Hash::make($request->password);
-
-        return User::where('id', $id)->update($args);
+        }else{
+            return User::where('id', $id)->update($args);
+        }
     }
-    
 
     /**
      * Deletar um usuário.

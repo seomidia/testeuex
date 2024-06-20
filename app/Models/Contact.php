@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Rules\cpf;
 
 class Contact extends Model
 {
@@ -32,7 +33,7 @@ class Contact extends Model
             'cep' => 'required|string',
             'lat' => 'required|string',
             'log' => 'required|string',
-            'cpf' => 'required|unique:contacts|regex:/^\d{3}\.\d{3}\.\d{3}-\d{2}$/',
+            'cpf' => ['required','unique:contacts', new cpf],
         ]);
     }
 

@@ -109,24 +109,28 @@ class ContactController extends Controller
         $log = $request->input('long');
         $cpf = $request->input('cpf');
 
-        $response = $this->Helpers->RequestApi('put', '/api/contato/update/' . $id, [
-            'nome' => $nome,
-            'telefone' => $telefone,
-            'endereco' => $endereco,
-            'cidade' => $cidade,
-            'estado' => $estado,
-            'cep' => $cep,
-            'lat' => $lat,
-            'log' => $log,
-            'cpf' => $cpf
-        ]);
-
-        if ($response->successful()) {
-            $feedback = json_decode($response->body());
-            return redirect()->route('admin.index')->with('success', $feedback->message);
-        } else {
-            $feedback = end(json_decode($response->body())->errors);
-            return redirect()->back()->with('errors', end($feedback));
+        try {
+            $response = $this->Helpers->RequestApi('put', '/api/contato/update/' . $id, [
+                'nome' => $nome,
+                'telefone' => $telefone,
+                'endereco' => $endereco,
+                'cidade' => $cidade,
+                'estado' => $estado,
+                'cep' => $cep,
+                'lat' => $lat,
+                'log' => $log,
+                'cpf' => $cpf
+            ]);
+    
+            if ($response->successful()) {
+                $feedback = json_decode($response->body());
+                return redirect()->route('admin.index')->with('success', $feedback->message);
+            } else {
+                $feedback = end(json_decode($response->body())->errors);
+                return redirect()->back()->with('errors', end($feedback));
+            }
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('errors', $th->getMessage());
         }
     }
 
@@ -135,11 +139,15 @@ class ContactController extends Controller
      */
     public function destroy($id)
     {
-        $response = $this->Helpers->RequestApi('delete', '/api/contato/' . $id . '/delete');
-        if ($response->successful()) {
-            return redirect()->route('admin.index')->with('success', 'Contato deletado com sucesso!');
-        } else {
-            return redirect()->back()->with('errors', 'Erro ao deletar o contato!');
+        try {
+            $response = $this->Helpers->RequestApi('delete', '/api/contato/' . $id . '/delete');
+            if ($response->successful()) {
+                return redirect()->route('admin.index')->with('success', 'Contato deletado com sucesso!');
+            } else {
+                return redirect()->back()->with('errors', 'Erro ao deletar o contato!');
+            }
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('errors', $th->getMessage());
         }
     }
 
@@ -149,9 +157,13 @@ class ContactController extends Controller
 
     public function viacepApi($cep)
     {
-        $response = $this->Helpers->RequestApi('post', '/api/viacep', [
-            'cep' => $cep
-        ]);
-        return $this->Contact->respondWithSuccess('success', json_decode($response->body()));
+        try {
+            $response = $this->Helpers->RequestApi('post', '/api/viacep', [
+                'cep' => $cep
+            ]);
+            return $this->Contact->respondWithSuccess('success', json_decode($response->body()));
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('errors', $th->getMessage());
+        }
     }
 }

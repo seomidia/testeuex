@@ -24,12 +24,16 @@ class ContactController extends Controller
      */
     public function viacep(Request $request)
     {
-        extract($request->all());
-        $response = Http::get( 'https://viacep.com.br/ws/'.$cep.'/json/');
-        if ($response->successful()) {
-            return response()->json(['viacep'=>json_decode($response->body())]);
-        } else {
-            return response()->json(['viacep'=>'Não foi possivel encontrar']);
+        $cep = $request->input('cep');
+        try {
+            $response = Http::get( 'https://viacep.com.br/ws/'.$cep.'/json/');
+            if ($response->successful()) {
+                return response()->json(['viacep'=>json_decode($response->body())]);
+            } else {
+                return response()->json(['viacep'=>'Não foi possivel encontrar']);
+            }
+        } catch (\Throwable $th) {
+            return response()->json(['viacep'=>$th->getMessage()]);
         }
     }
 
@@ -39,13 +43,11 @@ class ContactController extends Controller
     public function store(Request $request)
     {
         $validation = $this->Contact->validateContact($request);
-        
         if ($validation->fails())
             return $this->Contact->respondWithValidationErrors($validation);
 
         $Contact = $this->createContact($request);
         return $this->Contact->respondWithSuccess('Contato registrado com sucesso', $Contact);
-
     }
 
     /**
@@ -53,33 +55,35 @@ class ContactController extends Controller
      */
     private function createContact(Request $request)
     {
-        return Contact::create([
-            'nome' => $request->nome,
-            'telefone' => $request->telefone,
-            'endereco' => $request->endereco,
-            'cidade' => $request->cidade,
-            'estado' => $request->estado,
-            'cep' => $request->cep,
-            'lat' => $request->lat,
-            'log' => $request->log,
-            'cpf' => $request->cpf,
-            'users_id' => $request->users_id
-        ]);
+        try {
+            return Contact::create([
+                'nome' => $request->nome,
+                'telefone' => $request->telefone,
+                'endereco' => $request->endereco,
+                'cidade' => $request->cidade,
+                'estado' => $request->estado,
+                'cep' => $request->cep,
+                'lat' => $request->lat,
+                'log' => $request->log,
+                'cpf' => $request->cpf,
+                'users_id' => $request->users_id
+            ]);
+        } catch (\Throwable $th) {
+            $this->Helpers->respondWithValidationErrors($th->getMessage());
+        }
     }
 
     /**
-     * Valida contato a s atualizado.
+     * Valida contato a ser atualizado.
      */
     public function update(Request $request,$id)
     {
         $validation = $this->Contact->validateContactUpdate($request,$id);
-        
         if ($validation->fails())
             return $this->Contact->respondWithValidationErrors($validation);
 
         $Contact = $this->updateContact($request,$id);
         return $this->Contact->respondWithSuccess('Atualização realizada com sucesso', $Contact);
-
     }
 
     /**
@@ -87,35 +91,56 @@ class ContactController extends Controller
      */
     private function updateContact(Request $request,$id)
     {
-        return Contact::where('id',$id)->update([
-            'nome' => $request->nome,
-            'telefone' => $request->telefone,
-            'endereco' => $request->endereco,
-            'cidade' => $request->cidade,
-            'estado' => $request->estado,
-            'cep' => $request->cep,
-            'lat' => $request->lat,
-            'log' => $request->log,
-        ]);
+        try {
+            return Contact::where('id',$id)->update([
+                'nome' => $request->nome,
+                'telefone' => $request->telefone,
+                'endereco' => $request->endereco,
+                'cidade' => $request->cidade,
+                'estado' => $request->estado,
+                'cep' => $request->cep,
+                'lat' => $request->lat,
+                'log' => $request->log,
+            ]);
+        } catch (\Throwable $th) {
+            $this->Helpers->respondWithValidationErrors($th->getMessage());
+        }
     }
 
+    /**
+     * Deletar contato.
+     */
     public function delete($id)
     {
         $this->deleteContact($id);
         return $this->Contact->respondWithSuccess('Remoção realizada com sucesso',[]);
     }
 
+    /**
+     * Remove contato do banco.
+     */
     private function deleteContact($id)
     {
-        return Contact::where('id',$id)->delete();
+        try {
+            return Contact::where('id',$id)->delete();
+        } catch (\Throwable $th) {
+            $this->Helpers->respondWithValidationErrors($th->getMessage());
+        }
     }
 
+    /**
+     * Selecionar contato por ID.
+     */
     public function contactById($id)
     {
         return Contact::find($id);
     }
 
-    public function search($termo){
+    /**
+     * Filtrar contato por um termo.
+     */
+    public function search($termo)
+    {
         if($this->Helpers->Ehcpf($termo)){
             return Contact::where('cpf',$termo)->get();
         }

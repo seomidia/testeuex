@@ -18,6 +18,9 @@ class LoginController extends Controller
         $this->User = $User;
     }
 
+    /**
+     * Autentica usuario.
+     */
     public function Authenticate(Request $request)
     {
         $validation = Validator::make($request->all(), [
@@ -42,5 +45,4 @@ class LoginController extends Controller
             ], 200);
         }
     }
-
 }

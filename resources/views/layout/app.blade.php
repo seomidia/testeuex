@@ -258,6 +258,9 @@
             var action = jQuery(param).attr('data-action');
             jQuery('#deletar').modal('show');
             jQuery('#deletar').on('shown.bs.modal', function (e) {
+                if(title == 'Deletar Conta'){
+                    jQuery(this).find('input[name="_method"]').val('get');
+                }
                 jQuery(this).find('#form').attr('action',action);
                 jQuery(this).find('#title').html(title);
                 jQuery(this).find('.modal-body').html(description);

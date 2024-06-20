@@ -64,4 +64,15 @@ class Helpers
 
         return true;
     }
+
+    /**
+     * Resposta com erros de validação.
+     */
+    public function respondWithValidationErrors($msg)
+    {
+        return response()->json([
+            'errors' => $msg
+        ], 500);
+    }
+
 }

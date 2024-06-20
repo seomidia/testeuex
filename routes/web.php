@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ContactController;
-use App\Http\Controllers\UserController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -36,7 +35,8 @@ Route::prefix('dashboard')->group(function () {
     Route::name('admin.')->group(function () {
         Route::controller(DashboardController::class)->group(function () {
             Route::get('/', 'index')->name('index')->middleware('auth');
-            Route::delete('/deletar-conta', 'AccontDelete')->name('AccontDelete')->middleware('auth');
+            Route::get('/deletar-conta', 'ConfirmPassword')->name('AccontDelete')->middleware('auth');
+            Route::post('/deletar-conta', 'AccontDeleteConfirm')->name('AccontDeleteConfirm')->middleware('auth');
             Route::get('contatos/search', 'SearchContatos')->name('search')->middleware('auth');
         });
         Route::controller(ContactController::class)->group(function () {
